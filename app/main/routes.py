@@ -1,6 +1,9 @@
 from apiflask import APIBlueprint as Blueprint
+from apiflask.views import MethodView
+from app.serializers import SearchCSVSerializer
 from flask import current_app as app
 from flask import jsonify
+from flask import request
 from sqlalchemy.exc import IntegrityError
 
 from app import db
@@ -60,3 +63,11 @@ def get_hash(id):
 def error(code):
     app.logger.error(f"Error: {code}")
     return error_response(code)
+
+
+@bp.route("/search-csv/", methods=["GET"])
+class SearchCSVView(MethodView):
+    def get(self, *args, **kwargs):
+        schema = SearchCSVSerializer()
+        args = schema.load(request.args)
+        return jsonify(ok=args)
