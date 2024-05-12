@@ -1,3 +1,4 @@
+import csv
 from apiflask import APIBlueprint as Blueprint
 from apiflask.views import MethodView
 from app.serializers import SearchCSVSerializer
@@ -68,6 +69,29 @@ def error(code):
 @bp.route("/search-csv/", methods=["GET"])
 class SearchCSVView(MethodView):
     def get(self, *args, **kwargs):
-        schema = SearchCSVSerializer()
-        args = schema.load(request.args)
-        return jsonify(ok=args)
+        try:
+            schema = SearchCSVSerializer()
+            csv_data = schema.load(request.args)
+            name = csv_data.get('name', '')
+            city = csv_data.get('city', '')
+            quantity = csv_data.get('quantity', '')
+
+            # app.logger.info(f"Name: {name}")
+            # app.logger.info(f"City: {city}")
+
+            results = []
+            with open('app/files/vibra_challenge.csv', newline='') as csvfile:
+                reader = csv.reader(csvfile)
+                for row in reader:
+                    name_match = not name or name.lower() in row[1].lower()
+                    city_match = not city or city.lower() in row[-1].lower()
+                    if name_match and city_match:
+                        results.append(row)
+
+                if quantity:
+                    results = results[:quantity]
+
+            return jsonify(results)
+        except Exception as e:  # NOQA
+            app.logger.error(f"Error: {e}")
+            return error_response(500, message=str(e))

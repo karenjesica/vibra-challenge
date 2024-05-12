@@ -10,6 +10,11 @@ services:
     environment:
       - REDIS_URL=redis://redisdb:6379/1
       - FLASK_ENV
+    volumes:
+      - ./flask-scaffold:/app:cached
+    stdin_open: true
+    tty: true
+    restart: always
 
   redisdb:
     image: redis:alpine
