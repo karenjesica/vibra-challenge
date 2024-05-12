@@ -76,12 +76,13 @@ class SearchCSVView(MethodView):
             city = csv_data.get('city', '')
             quantity = csv_data.get('quantity', '')
 
-            # app.logger.info(f"Name: {name}")
-            # app.logger.info(f"City: {city}")
 
             results = []
             with open('app/files/vibra_challenge.csv', newline='') as csvfile:
                 reader = csv.reader(csvfile)
+
+                app.logger.info(f"[CSV Search] Name filter: {name}.")
+                app.logger.info(f"[CSV Search] City filter: {city}.")
                 for row in reader:
                     name_match = not name or name.lower() in row[1].lower()
                     city_match = not city or city.lower() in row[-1].lower()
@@ -89,6 +90,7 @@ class SearchCSVView(MethodView):
                         results.append(row)
 
                 if quantity:
+                    app.logger.info(f"[CSV Search] Listing {quantity} results.")
                     results = results[:quantity]
 
             return jsonify(results)
