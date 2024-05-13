@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import asyncio
 import unittest
 from json import dumps
@@ -11,12 +10,7 @@ from app.models import Table
 from app.tasks import process_search_csv
 
 
-class TestConfig(Config):
-    TESTING = True
-    SQLALCHEMY_DATABASE_URI = "sqlite://"
-
-
-class ModelsTest(unittest.TestCase):
+class BaseTestCase(unittest.TestCase):
     def setUp(self):
         self.app = create_app(TestConfig)
         self.app_context = self.app.app_context()
@@ -28,6 +22,13 @@ class ModelsTest(unittest.TestCase):
         db.drop_all()
         self.app_context.pop()
 
+
+class TestConfig(Config):
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = "sqlite://"
+
+
+class ModelsTest(BaseTestCase):
     def test_table(self):
         t = Table(id=1, hash="abc")
         db.session.add(t)
@@ -36,12 +37,9 @@ class ModelsTest(unittest.TestCase):
         self.assertEqual(t.hash, "abc")
 
 
-class CSVSearchTest(unittest.TestCase):
+class CSVSearchTest(BaseTestCase):
     def setUp(self):
-        self.app = create_app(TestConfig)
-        self.app_context = self.app.app_context()
-        self.app_context.push()
-        db.create_all()
+        super().setUp()  # Llama al setUp de la clase base
         load_csv_data("app/files/vibra_challenge.csv")
         self.client = self.app.test_client()
         self.expected_data_csv = [
@@ -77,11 +75,6 @@ class CSVSearchTest(unittest.TestCase):
             },
         ]
         self.expected_url = "http://localhost:5000/redis/transaction_id"
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-        self.app_context.pop()
 
     def test_process_search_csv_filtering_by_name(self):
         name = "glen"
