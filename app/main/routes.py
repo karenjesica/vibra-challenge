@@ -1,7 +1,10 @@
-import csv
+import asyncio
+from json import dumps
+from uuid import uuid4
 from apiflask import APIBlueprint as Blueprint
-from flask.views import MethodView
+from apiflask.views import MethodView
 from app.serializers import SearchCSVSerializer
+from app.tasks import process_search_csv
 from flask import current_app as app
 from flask import jsonify
 from flask import request
@@ -34,9 +37,11 @@ def get_redis_value(key):
     return jsonify(result=v.decode())
 
 
-@bp.route("/redis/<key>/<value>", methods=["PUT"])
-def set_redis_value(key, value):
-    return jsonify(set=app.redis.set(key, value))
+@bp.route("/redis/<key>", methods=["PUT"])
+def set_redis_value(key):
+    data = request.get_json()
+    app.redis.set(key, dumps(data))
+    return jsonify({"message": "Data stored successfully"})
 
 
 @bp.route("/db/<hash>", methods=["PUT"])
@@ -77,24 +82,9 @@ class SearchCSVView(MethodView):
             city = csv_data.get("city", "")
             quantity = csv_data.get("quantity", "")
 
-
-            results = []
-            with open("app/files/vibra_challenge.csv", newline="") as csvfile:
-                reader = csv.reader(csvfile)
-
-                app.logger.info(f"{self.log_prefix} Name filter: {name}." if name else f"{self.log_prefix} No filter applied for name.")
-                app.logger.info(f"{self.log_prefix} City filter: {city}." if city else f"{self.log_prefix} No filter applied for city.")
-                for row in reader:
-                    name_match = not name or name.lower() in row[1].lower()
-                    city_match = not city or city.lower() in row[-1].lower()
-                    if name_match and city_match:
-                        results.append(row)
-
-                if quantity:
-                    results = results[:quantity]
-
-            app.logger.info(f"{self.log_prefix} Listing {len(results)} results.")
-            return jsonify({'csv_result': results}), 200
+            transaction_id = str(uuid4())
+            asyncio.run(process_search_csv(name, city, quantity, transaction_id))
+            return jsonify({"message": "Search request received", "transaction_id": transaction_id}), 202
         except Exception as e:  # NOQA
             app.logger.error(f"Error: {e}")
             return error_response(500, message=str(e))
