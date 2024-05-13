@@ -9,6 +9,7 @@ from app.config import Config
 from app.models import Table
 from app.tasks import process_search_csv
 
+
 class TestConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite://"
@@ -41,9 +42,33 @@ class CSVSearchTest(unittest.TestCase):
         self.app_context.push()
         self.client = self.app.test_client()
         self.expected_data_csv = [
-            ['352', 'Glen', 'Rosebotham', 'grosebotham9r@examiner.com', 'Bigender', 'Buzzster', 'Romorantin-Lanthenay'],
-            ['363', 'Glendon', 'Riche', 'grichea2@joomla.org', 'Bigender', 'Fivechat', 'Serhetabat'],
-            ['713', 'Glendon', 'Iacomelli', 'giacomellijs@drupal.org', 'Non-binary', 'Tazzy', 'Nouakchott']
+            [
+                "352",
+                "Glen",
+                "Rosebotham",
+                "grosebotham9r@examiner.com",
+                "Bigender",
+                "Buzzster",
+                "Romorantin-Lanthenay",
+            ],
+            [
+                "363",
+                "Glendon",
+                "Riche",
+                "grichea2@joomla.org",
+                "Bigender",
+                "Fivechat",
+                "Serhetabat",
+            ],
+            [
+                "713",
+                "Glendon",
+                "Iacomelli",
+                "giacomellijs@drupal.org",
+                "Non-binary",
+                "Tazzy",
+                "Nouakchott",
+            ],
         ]
         self.expected_url = "http://localhost:5000/redis/transaction_id"
 
@@ -55,13 +80,15 @@ class CSVSearchTest(unittest.TestCase):
         city = ""
         quantity = ""
         results_json = dumps(self.expected_data_csv)
-        with patch("urllib.request.urlopen"), patch("urllib.request.Request") as mock_request:
+        with patch("urllib.request.urlopen"), patch(
+            "urllib.request.Request"
+        ) as mock_request:
             asyncio.run(process_search_csv(name, city, quantity, "transaction_id"))
             mock_request.assert_called_once_with(
                 self.expected_url,
                 data=results_json.encode("utf-8"),
                 headers={"Content-Type": "application/json"},
-                method="PUT"
+                method="PUT",
             )
 
     def test_process_search_csv_filtering_by_city(self):
@@ -69,13 +96,15 @@ class CSVSearchTest(unittest.TestCase):
         city = "Lanthenay"
         quantity = ""
         results_json = dumps([self.expected_data_csv[0]])
-        with patch("urllib.request.urlopen"), patch("urllib.request.Request") as mock_request:
+        with patch("urllib.request.urlopen"), patch(
+            "urllib.request.Request"
+        ) as mock_request:
             asyncio.run(process_search_csv(name, city, quantity, "transaction_id"))
             mock_request.assert_called_once_with(
                 self.expected_url,
                 data=results_json.encode("utf-8"),
                 headers={"Content-Type": "application/json"},
-                method="PUT"
+                method="PUT",
             )
 
     def test_process_search_csv_filtering_by_city_and_name(self):
@@ -83,13 +112,15 @@ class CSVSearchTest(unittest.TestCase):
         city = "he"
         quantity = ""
         results_json = dumps([self.expected_data_csv[0], self.expected_data_csv[1]])
-        with patch("urllib.request.urlopen"), patch("urllib.request.Request") as mock_request:
+        with patch("urllib.request.urlopen"), patch(
+            "urllib.request.Request"
+        ) as mock_request:
             asyncio.run(process_search_csv(name, city, quantity, "transaction_id"))
             mock_request.assert_called_once_with(
                 self.expected_url,
                 data=results_json.encode("utf-8"),
                 headers={"Content-Type": "application/json"},
-                method="PUT"
+                method="PUT",
             )
 
     def test_process_search_csv_filtering_by_city_and_name_and_quantity(self):
@@ -97,13 +128,15 @@ class CSVSearchTest(unittest.TestCase):
         city = "he"
         quantity = 1
         results_json = dumps([self.expected_data_csv[0]])
-        with patch("urllib.request.urlopen"), patch("urllib.request.Request") as mock_request:
+        with patch("urllib.request.urlopen"), patch(
+            "urllib.request.Request"
+        ) as mock_request:
             asyncio.run(process_search_csv(name, city, quantity, "transaction_id"))
             mock_request.assert_called_once_with(
                 self.expected_url,
                 data=results_json.encode("utf-8"),
                 headers={"Content-Type": "application/json"},
-                method="PUT"
+                method="PUT",
             )
 
     def test_process_search_csv_no_results_found(self):
@@ -111,13 +144,15 @@ class CSVSearchTest(unittest.TestCase):
         city = "not_exists"
         quantity = 1
         results_json = dumps([])
-        with patch("urllib.request.urlopen"), patch("urllib.request.Request") as mock_request:
+        with patch("urllib.request.urlopen"), patch(
+            "urllib.request.Request"
+        ) as mock_request:
             asyncio.run(process_search_csv(name, city, quantity, "transaction_id"))
             mock_request.assert_called_once_with(
                 self.expected_url,
                 data=results_json.encode("utf-8"),
                 headers={"Content-Type": "application/json"},
-                method="PUT"
+                method="PUT",
             )
 
     @patch("app.main.routes.process_search_csv")

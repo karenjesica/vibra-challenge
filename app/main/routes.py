@@ -74,6 +74,7 @@ def error(code):
 @bp.route("/search-csv", methods=["GET"])
 class SearchCSVView(MethodView):
     log_prefix = "[CSV Search]"
+
     def get(self, *args, **kwargs):
         try:
             schema = SearchCSVSerializer()
@@ -84,7 +85,15 @@ class SearchCSVView(MethodView):
 
             transaction_id = str(uuid4())
             asyncio.run(process_search_csv(name, city, quantity, transaction_id))
-            return jsonify({"message": "Search request received", "transaction_id": transaction_id}), 202
+            return (
+                jsonify(
+                    {
+                        "message": "Search request received",
+                        "transaction_id": transaction_id,
+                    }
+                ),
+                202,
+            )
         except Exception as e:  # NOQA
             app.logger.error(f"Error: {e}")
             return error_response(500, message=str(e))
