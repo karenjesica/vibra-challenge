@@ -1,6 +1,6 @@
 import csv
 from apiflask import APIBlueprint as Blueprint
-from apiflask.views import MethodView
+from flask.views import MethodView
 from app.serializers import SearchCSVSerializer
 from flask import current_app as app
 from flask import jsonify
@@ -66,23 +66,24 @@ def error(code):
     return error_response(code)
 
 
-@bp.route("/search-csv/", methods=["GET"])
+@bp.route("/search-csv", methods=["GET"])
 class SearchCSVView(MethodView):
+    log_prefix = "[CSV Search]"
     def get(self, *args, **kwargs):
         try:
             schema = SearchCSVSerializer()
             csv_data = schema.load(request.args)
-            name = csv_data.get('name', '')
-            city = csv_data.get('city', '')
-            quantity = csv_data.get('quantity', '')
+            name = csv_data.get("name", "")
+            city = csv_data.get("city", "")
+            quantity = csv_data.get("quantity", "")
 
 
             results = []
-            with open('app/files/vibra_challenge.csv', newline='') as csvfile:
+            with open("app/files/vibra_challenge.csv", newline="") as csvfile:
                 reader = csv.reader(csvfile)
 
-                app.logger.info(f"[CSV Search] Name filter: {name}.")
-                app.logger.info(f"[CSV Search] City filter: {city}.")
+                app.logger.info(f"{self.log_prefix} Name filter: {name}." if name else f"{self.log_prefix} No filter applied for name.")
+                app.logger.info(f"{self.log_prefix} City filter: {city}." if city else f"{self.log_prefix} No filter applied for city.")
                 for row in reader:
                     name_match = not name or name.lower() in row[1].lower()
                     city_match = not city or city.lower() in row[-1].lower()
@@ -90,10 +91,10 @@ class SearchCSVView(MethodView):
                         results.append(row)
 
                 if quantity:
-                    app.logger.info(f"[CSV Search] Listing {quantity} results.")
                     results = results[:quantity]
 
-            return jsonify(results)
+            app.logger.info(f"{self.log_prefix} Listing {len(results)} results.")
+            return jsonify({'csv_result': results}), 200
         except Exception as e:  # NOQA
             app.logger.error(f"Error: {e}")
             return error_response(500, message=str(e))
