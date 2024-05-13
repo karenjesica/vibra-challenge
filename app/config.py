@@ -14,6 +14,7 @@ class Config(object):
         )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     REDIS_URL = os.environ.get("REDIS_URL") or "redis://localhost:6379/1"
+    REDIS_ENDPOINT = "http://localhost:5000/redis/"
 
 
 class Development(Config):

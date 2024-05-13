@@ -1,6 +1,8 @@
 import asyncio
 from json import dumps
 from uuid import uuid4
+
+import marshmallow
 from apiflask import APIBlueprint as Blueprint
 from apiflask.views import MethodView
 from app.serializers import SearchCSVSerializer
@@ -76,7 +78,16 @@ class SearchCSVView(MethodView):
     log_prefix = "[CSV Search]"
 
     def get(self, *args, **kwargs):
+        """
+        Search CSV data based on name and/or city.
+        Parses query parameters to initiate an asynchronous task for the search.
+
+        Returns:
+            tuple: JSON response and HTTP status code.
+        """
         try:
+            app.logger.info(f"{self.log_prefix} Entering search endpoint.")
+
             schema = SearchCSVSerializer()
             csv_data = schema.load(request.args)
             name = csv_data.get("name", "")
@@ -85,6 +96,9 @@ class SearchCSVView(MethodView):
 
             transaction_id = str(uuid4())
             asyncio.run(process_search_csv(name, city, quantity, transaction_id))
+
+            app.logger.info(f"{self.log_prefix} Search request successfully initiated.")
+
             return (
                 jsonify(
                     {
@@ -94,6 +108,9 @@ class SearchCSVView(MethodView):
                 ),
                 202,
             )
-        except Exception as e:  # NOQA
-            app.logger.error(f"Error: {e}")
+        except marshmallow.exceptions.ValidationError as e:
+            app.logger.error(f"{self.log_prefix} Validation error: {e}")
+            return error_response(400, message=str(e))
+        except Exception as e:
+            app.logger.error(f"{self.log_prefix} Error: {e}")
             return error_response(500, message=str(e))

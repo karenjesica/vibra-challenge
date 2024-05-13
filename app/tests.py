@@ -6,6 +6,7 @@ from unittest.mock import ANY, patch
 
 from app import create_app, db
 from app.config import Config
+from app.helpers import load_csv_data
 from app.models import Table
 from app.tasks import process_search_csv
 
@@ -40,39 +41,46 @@ class CSVSearchTest(unittest.TestCase):
         self.app = create_app(TestConfig)
         self.app_context = self.app.app_context()
         self.app_context.push()
+        db.create_all()
+        load_csv_data("app/files/vibra_challenge.csv")
         self.client = self.app.test_client()
         self.expected_data_csv = [
-            [
-                "352",
-                "Glen",
-                "Rosebotham",
-                "grosebotham9r@examiner.com",
-                "Bigender",
-                "Buzzster",
-                "Romorantin-Lanthenay",
-            ],
-            [
-                "363",
-                "Glendon",
-                "Riche",
-                "grichea2@joomla.org",
-                "Bigender",
-                "Fivechat",
-                "Serhetabat",
-            ],
-            [
-                "713",
-                "Glendon",
-                "Iacomelli",
-                "giacomellijs@drupal.org",
-                "Non-binary",
-                "Tazzy",
-                "Nouakchott",
-            ],
+            {
+                "id": 352,
+                "user_id": 352,
+                "first_name": "Glen",
+                "last_name": "Rosebotham",
+                "email": "grosebotham9r@examiner.com",
+                "gender": "Bigender",
+                "company": "Buzzster",
+                "city": "Romorantin-Lanthenay",
+            },
+            {
+                "id": 363,
+                "user_id": 363,
+                "first_name": "Glendon",
+                "last_name": "Riche",
+                "email": "grichea2@joomla.org",
+                "gender": "Bigender",
+                "company": "Fivechat",
+                "city": "Serhetabat",
+            },
+            {
+                "id": 713,
+                "user_id": 713,
+                "first_name": "Glendon",
+                "last_name": "Iacomelli",
+                "email": "giacomellijs@drupal.org",
+                "gender": "Non-binary",
+                "company": "Tazzy",
+                "city": "Nouakchott",
+            },
         ]
         self.expected_url = "http://localhost:5000/redis/transaction_id"
 
     def tearDown(self):
+        db.session.remove()
+        db.drop_all()
         self.app_context.pop()
 
     def test_process_search_csv_filtering_by_name(self):
@@ -156,8 +164,15 @@ class CSVSearchTest(unittest.TestCase):
             )
 
     @patch("app.main.routes.process_search_csv")
-    def test_search_csv_should_return_200(self, mock_process_search_csv):
+    def test_search_csv_should_return_202(self, mock_process_search_csv):
         response = self.app.test_client().get("/search-csv?name=glen")
         self.assertEqual(response.status_code, 202)
         self.assertEqual(response.get_json()["message"], "Search request received")
         mock_process_search_csv.assert_called_once_with("glen", "", "", ANY)
+
+    @patch("app.main.routes.process_search_csv")
+    def test_search_csv_should_return_400(self, mock_process_search_csv):
+        response = self.app.test_client().get("/search-csv?not_exists=glen")
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.get_json()["message"], "{'not_exists': ['Unknown field.']}")
+        mock_process_search_csv.assert_not_called()
