@@ -46,7 +46,7 @@ async def process_search_csv(name, city, quantity, transaction_id):
         results = [row.to_dict() for row in query.all()]
         send_results_to_redis(results, transaction_id)
 
-        app.logger.info(f"{log_prefix} Listing {len(results)} results.")
+        app.logger.info(f"{log_prefix} Listing {len(results)} result(s).")
 
     except Exception as e:
         app.logger.error(f"Error: {e}")

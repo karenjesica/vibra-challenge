@@ -12,7 +12,7 @@
 
 ### Create virtual environment with dependencies
 
-    python3 -m venv venv && source venv/bin/activate && poetry install
+    python3 -m venv venv; source venv/bin/activate; poetry install; pip uninstall -y apiflask; pip install apiflask
 
 ### Specify development config (with debug mode on)
 
@@ -48,7 +48,7 @@ When running the migration:
     # take the Redis key (transaction_id) and call the endpoint that returns the records with applied filters.
     http://0.0.0.0:5000/redis/<transaction_id>
 
-### opciones:
+### Options:
 - filter by name only.
 - filter by city only.
 - filter by quantity only.
