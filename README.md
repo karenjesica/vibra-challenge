@@ -1,15 +1,4 @@
-# flask-scaffold
-
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/81fa5c454ada4729bdbc3c1d8b2722bd)](https://app.codacy.com/app/kigawas/flask-scaffold)
-[![Github Actions](https://img.shields.io/github/checks-status/kigawas/flask-scaffold/master)](https://github.com/kigawas/flask-scaffold/actions)
-[![Docker Build Status](https://img.shields.io/docker/cloud/build/kigawas/flask-scaffold.svg)](https://hub.docker.com/r/kigawas/flask-scaffold/)
-[![License](https://img.shields.io/github/license/kigawas/flask-scaffold.svg)](https://github.com/kigawas/flask-scaffold)
-
-A scaffold to speed up launching a flask project, set up with [minimal dependencies](https://github.com/kigawas/flask-scaffold/blob/master/pyproject.toml).
-
-You can just remove `LICENSE`, `.git/`, and `.vscode/` files if you don't need them.
-
-There is no silver bullet, so if other libraries or practice are preferred, you can add or change anything as you like.
+# Vibra Gaming Challenge
 
 ## Prerequisites
 
@@ -17,16 +6,7 @@ There is no silver bullet, so if other libraries or practice are preferred, you 
 
 - Poetry
 
-- (Optional) Docker and docker compose
-
-## Main features
-
-- [APIFlask](https://apiflask.com/)
-- Blueprint templates to organize directory structure
-- Colorful logger in terminals, stolen from [tornado](https://github.com/tornadoweb/tornado/blob/master/tornado/log.py)
-- Gunicorn aiohttp server for production use
-- Integrated with static analysis and lint tools like `mypy`, `black`, `flake8` and git hook tool [`pre-commit`](https://pre-commit.com/#intro)
-- Default [Github Actions](https://github.com/kigawas/flask-scaffold/actions) and [Heroku](https://scaffold-flask.herokuapp.com/) configuration
+- Docker and docker compose
 
 ## Common tasks
 
@@ -42,14 +22,6 @@ There is no silver bullet, so if other libraries or practice are preferred, you 
 
     flask run
 
-### Run development gunicorn server with aiohttp worker
-
-    gunicorn -b :5000 aioapp:aioapp -k aiohttp.worker.GunicornWebWorker --reload
-
-### Run production gunicorn server
-
-    ./boot.sh
-
 ### Build docker image
 
     docker build .
@@ -58,10 +30,27 @@ There is no silver bullet, so if other libraries or practice are preferred, you 
 
     docker-compose up --build
 
-### Format Python code with black
+### Run migrations
+    flask db upgrade
 
-    black . --exclude venv
+When running the migration:
+- a new table named csv_data will be created.
+- the CSV will be saved into the database.
 
-### Run git pre-commit hooks
+### Run tests
 
-    pre-commit run --all-files
+    python3 -m unittest discover -s app -p '*tests.py'
+
+## Steps to Follow to Search for the CSV:
+    # call the GET endpoint in the browser; the response will be a <transaction_id> associated with a Redis key.
+    http://0.0.0.0:5000/search-csv?name=<string>&city=<string>&quantity=<int>
+
+    # take the Redis key (transaction_id) and call the endpoint that returns the records with applied filters.
+    http://0.0.0.0:5000/redis/<transaction_id>
+
+### opciones:
+- filter by name only.
+- filter by city only.
+- filter by quantity only.
+- if no filters are applied, list all results.
+- if the filters do not match, return an empty list.
