@@ -39,7 +39,7 @@ class ModelsTest(BaseTestCase):
 
 class CSVSearchTest(BaseTestCase):
     def setUp(self):
-        super().setUp()  # Llama al setUp de la clase base
+        super().setUp()
         load_csv_data("app/files/vibra_challenge.csv")
         self.client = self.app.test_client()
         self.expected_data_csv = [
